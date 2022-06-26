@@ -22,7 +22,7 @@ struct App {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        window = glfwCreateWindow(1920, 1080, "Ray Tracing Skeleton 01", nullptr, nullptr);
+        window = glfwCreateWindow(1920, 1080, "Ray Tracing Skeleton 01 - UV Test", nullptr, nullptr);
 
         // Setup OpenGL
         glfwMakeContextCurrent(window);
@@ -86,8 +86,8 @@ struct App {
         pixels.resize(textureSize.x * textureSize.y);
 
         // Demo UV pattern
-        for (int x = 0; x < textureSize.x; ++x) {
-            for (int y = 0; y < textureSize.y; ++y) {
+        for (int y = 0; y < textureSize.y; ++y) {
+            for (int x = 0; x < textureSize.x; ++x) {
                 Pixel(x, y) = { x / (textureSize.x - 1.f), y / (textureSize.y - 1.f), 0.f, 1.f };
             }
         }
