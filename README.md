@@ -24,3 +24,10 @@ Very basic skeleton program that just provides a texture, some utilities for dra
 \+ Adjustable UV pattern parameters\
 \+ Scalable Texture size\
 \+ Weighted + Jittered samples
+
+## Skeleton 03 - RayGen
+
+\+ Ray Generation\
+\+ Sphere Intersection\
+\+ Surface normal visulization\
+\+ Statistics

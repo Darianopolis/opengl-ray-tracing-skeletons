@@ -43,7 +43,7 @@ struct App {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        window = glfwCreateWindow(800, 600, "Ray Tracing Skeleton 01 - ImGui", nullptr, nullptr);
+        window = glfwCreateWindow(800, 600, "Ray Tracing Skeleton 02 - ImGui", nullptr, nullptr);
 
         // Setup OpenGL
         glfwMakeContextCurrent(window);
