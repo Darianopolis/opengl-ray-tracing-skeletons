@@ -1,6 +1,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
+#include <glad/gl.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -15,8 +15,8 @@
 #include <glm/gtx/norm.hpp>
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #include <vector>
 #include <random>
@@ -79,6 +79,10 @@ struct RNG {
     }
 };
 
+struct Color {
+    glm::vec3 value;
+};
+
 struct Ray {
     glm::vec3 origin, dir;
     float t = Inf;
@@ -114,6 +118,8 @@ struct Sphere {
         ray.t = root;
         hit.point = ray.origin + ray.dir * root;
         hit.normal = glm::normalize(hit.point - center);
+
+        return true;
     }
 };
 
@@ -141,6 +147,7 @@ struct App {
     std::chrono::high_resolution_clock::time_point sampleStart;
     std::chrono::high_resolution_clock::time_point sampleEnd;
 
+    std::vector<Color> colours;
     std::vector<Primitive> primitives;
 
     //// End of Custom Variables ////
@@ -156,7 +163,7 @@ struct App {
 
         // Setup OpenGL
         glfwMakeContextCurrent(window);
-        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
         // Register for resize callback
@@ -181,8 +188,11 @@ struct App {
         OnResize(windowSize.x, windowSize.y);
 
         // Scene
-        primitives.push_back(Sphere{.center = { 0.f, 0.f, 0.f }, .radius = 0.5f });
-        primitives.push_back(Sphere{.center = { 0.5f, 0.f, 0.f }, .radius = 0.25f });
+        primitives.push_back(Sphere{.center = { -0.25f, 0.f, 0.f }, .radius = 0.5f });
+        primitives.push_back(Sphere{.center = { 0.25f, 0.f, 0.f }, .radius = 0.5f });
+
+        colours.push_back(Color{{1.f, 0.f, 0.f}});
+        colours.push_back(Color{{0.f, 1.f, 0.f}});
     }
 
     ~App()
@@ -195,7 +205,7 @@ struct App {
         glfwTerminate();
     }
 
-    glm::vec4& Pixel(int x, int y) 
+    glm::vec4& Pixel(int x, int y)
     {
         return pixels[y * textureSize.x + x];
     }
@@ -209,7 +219,7 @@ struct App {
     void OnResize(int w, int h)
     {
         windowSize = { w, h };
-        
+
         ResizeTexture(int(w * texSizeMultiplier), int(h * texSizeMultiplier));
     }
 
@@ -240,17 +250,34 @@ struct App {
         // Initialize ray and hit
         Ray ray{pos, dir, Inf};
         Hit hit{};
+        Color color {};
 
         // Search primitives to find a hit
+        for (int i = 0; i < primitives.size(); ++i) {
+            rays++;
+            if (std::visit([&](auto&& prim) { return prim.Hit(ray, hit); }, primitives[i])) {
+                color = colours[i];
+            }
+        }
+
+        if (ray.t == Inf)
+            return glm::vec4(0.f, 0.f, 0.f, 1.f);
+
+        auto lightDir = glm::normalize(glm::vec3(-2.f, 1.f, 1.f));
+        float light = glm::dot(hit.normal, lightDir);
+
+        ray.origin = hit.point;
+        ray = { hit.point, lightDir, Inf };
+        hit = {};
         for (auto& primitive : primitives) {
+            rays++;
             std::visit([&](auto&& prim) { return prim.Hit(ray, hit); }, primitive);
         }
 
-        rays++;
+        if (ray.t < Inf) // Occluded from light
+            return glm::vec4(0.f, 0.f, 0.f, 1.f);
 
-        return ray.t < Inf
-            ? glm::vec4(hit.normal * glm::vec3(0.5f) + glm::vec3(0.5f), 1.f)
-            : glm::vec4(0.f, 0.f, 0.f, 1.f);
+        return glm::vec4(glm::vec3(color.value) * glm::vec3(light), 1.f);
     }
 
     void Sample(float weight, float jitter = 0.f)
@@ -291,7 +318,17 @@ struct App {
         using namespace std::chrono;
         using namespace std::chrono_literals;
 
+        int frames = 0;
+        int fps = 0;
+        auto last = steady_clock::now();
         while (!glfwWindowShouldClose(window)) {
+
+            if (steady_clock::now() - last > 1s)
+            {
+                fps = frames;
+                frames = 0;
+                last = steady_clock::now();
+            }
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -305,6 +342,7 @@ struct App {
             ImGui::Text("Total Rays: %s", formatLargeNumber(rays).c_str());
             ImGui::Text("Time: %.1fs", duration_cast<duration<float>>(sampleEnd - sampleStart).count());
             ImGui::Text("Texture Size: (%i, %i)", textureSize.x, textureSize.y);
+            ImGui::Text("FPS: %i", fps);
 
             // Change scale of texture relative to window  size
             if (ImGui::SliderFloat("Texture scale", &texSizeMultiplier, 0.02f, 1.f)) {
@@ -316,7 +354,7 @@ struct App {
             }
 
             ImGui::End();
-            
+
             // Sample using exponential moving average and update times
             if (sample == 0)
                 sampleStart = high_resolution_clock::now();
@@ -330,8 +368,8 @@ struct App {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             glBlitFramebuffer(
-                0, 0, textureSize.x, textureSize.y, 
-                0, 0, windowSize.x, windowSize.y, 
+                0, 0, textureSize.x, textureSize.y,
+                0, 0, windowSize.x, windowSize.y,
                 GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             // Present
@@ -341,6 +379,8 @@ struct App {
             glfwSwapBuffers(window);
 
             glfwPollEvents();
+
+            frames++;
         }
     }
 };

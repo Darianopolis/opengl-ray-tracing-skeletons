@@ -1,6 +1,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -22,11 +22,11 @@ struct App {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-        window = glfwCreateWindow(1920, 1080, "Ray Tracing Skeleton 01 - UV Test", nullptr, nullptr);
+        window = glfwCreateWindow(800, 600, "OpenGL UV Test", nullptr, nullptr);
 
         // Setup OpenGL
         glfwMakeContextCurrent(window);
-        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
         // Register for resize callback
@@ -56,7 +56,7 @@ struct App {
     /*
      * Gets the pixel at (x, y) to be read/modified
      */
-    glm::vec4& Pixel(int x, int y) 
+    glm::vec4& Pixel(int x, int y)
     {
         return pixels[y * textureSize.x + x];
     }
@@ -73,7 +73,7 @@ struct App {
     void OnResize(int w, int h)
     {
         windowSize = { w, h };
-        
+
         // Change this if you want a different sized texture to your screen!
         ResizeTexture(w, h);
     }
@@ -102,9 +102,9 @@ struct App {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             glBlitFramebuffer(
-                0, 0, textureSize.x, textureSize.y, 
-                0, 0, windowSize.x, windowSize.y, 
-                GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                0, 0, textureSize.x, textureSize.y,
+                0, 0, windowSize.x, windowSize.y,
+                GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
             // Present and check events
             glfwSwapBuffers(window);

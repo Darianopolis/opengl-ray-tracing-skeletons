@@ -1,6 +1,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -47,7 +47,7 @@ struct App {
 
         // Setup OpenGL
         glfwMakeContextCurrent(window);
-        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+        gladLoadGL(glfwGetProcAddress);
         glfwSwapInterval(1);
 
         // Register for resize callback
@@ -82,7 +82,7 @@ struct App {
         glfwTerminate();
     }
 
-    glm::vec4& Pixel(int x, int y) 
+    glm::vec4& Pixel(int x, int y)
     {
         return pixels[y * textureSize.x + x];
     }
@@ -96,7 +96,7 @@ struct App {
     void OnResize(int w, int h)
     {
         windowSize = { w, h };
-        
+
         ResizeTexture(int(w * texSizeMultiplier), int(h * texSizeMultiplier));
     }
 
@@ -137,7 +137,7 @@ struct App {
     void Run()
     {
         while (!glfwWindowShouldClose(window)) {
-            
+
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
@@ -163,9 +163,9 @@ struct App {
             if (colorChanged) sample = 0;
 
             ImGui::End();
-            
+
             // Sample using exponential moving average
-            if (sample < 100) 
+            if (sample < 100)
                 Sample(1.f / ++sample, 1.f);
 
             // Just blit the texture directly out to the screen for now!
@@ -173,8 +173,8 @@ struct App {
             glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
             glBlitFramebuffer(
-                0, 0, textureSize.x, textureSize.y, 
-                0, 0, windowSize.x, windowSize.y, 
+                0, 0, textureSize.x, textureSize.y,
+                0, 0, windowSize.x, windowSize.y,
                 GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
             // Present
