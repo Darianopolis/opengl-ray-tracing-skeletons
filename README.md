@@ -28,6 +28,6 @@ Very basic skeleton program that just provides a texture, some utilities for dra
 ## Skeleton 03 - RayGen
 
 \+ Ray Generation\
-\+ Sphere Intersection\
-\+ Surface normal visulization\
-\+ Statistics
+\+ Sphere Intersections\
+\+ Basic color and shading\
+\+ Performance Statistics
